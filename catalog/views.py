@@ -1,3 +1,5 @@
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render
 from django.views import generic
 
@@ -5,6 +7,7 @@ from .models import BookInstance, Book, Author, Genre
 
 
 # Create your views here.
+@login_required
 def index(request):
     """
         View function for home page of site.
@@ -16,7 +19,7 @@ def index(request):
     num_instances_available = BookInstance.objects.filter(status__exact='a').count()
     num_authors = Author.objects.count()  # The 'all()' is implied by default.
     num_genres = Genre.objects.count()
-    num_LearningwithKernels = BookInstance.objects.filter(book__title__startswith='Learning').count()
+    num_learningwithkkernels = BookInstance.objects.filter(book__title__startswith='Learning').count()
 
     # # Render the HTML template base_generic.html with the data in the context variable
     # return render(
@@ -36,22 +39,36 @@ def index(request):
         'index.html',
         context={'num_books': num_books, 'num_instances': num_instances,
                  'num_instances_available': num_instances_available, 'num_authors': num_authors,
-                 'num_visits': num_visits},  # num_visits appended
+                 'num_visits': num_visits, 'num_genres': num_genres,
+                 'num_LearningwithKernels': num_learningwithkkernels},  # num_visits appended
     )
 
 
-class BookListView(generic.ListView):
+class BookListView(LoginRequiredMixin, generic.ListView):
     model = Book
-    paginate_by = 1
+    paginate_by = 2
 
 
-class BookDetailView(generic.DetailView):
+class BookDetailView(LoginRequiredMixin, generic.DetailView):
     model = Book
 
 
-class AuthorListView(generic.ListView):
+class AuthorListView(LoginRequiredMixin, generic.ListView):
+    model = Author
+    paginate_by = 3
+
+
+class AuthorDetailView(LoginRequiredMixin, generic.DetailView):
     model = Author
 
 
-class AuthorDetailView(generic.DetailView):
-    model = Author
+class LoanedBooksByUserListView(LoginRequiredMixin, generic.ListView):
+    """
+    Generic class-based view listing books on loan to current user.
+    """
+    model = BookInstance
+    template_name = 'catalog/bookinstance_list_borrowed_user.html'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return BookInstance.objects.filter(borrower=self.request.user).filter(status__exact='o').order_by('due_back')
