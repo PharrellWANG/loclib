@@ -18,14 +18,25 @@ def index(request):
     num_genres = Genre.objects.count()
     num_LearningwithKernels = BookInstance.objects.filter(book__title__startswith='Learning').count()
 
-    # Render the HTML template base_generic.html with the data in the context variable
+    # # Render the HTML template base_generic.html with the data in the context variable
+    # return render(
+    #     request,
+    #     'index.html',
+    #     context={'num_LearningwithKernels': num_LearningwithKernels, 'num_genres': num_genres, 'num_books': num_books,
+    #              'num_instances': num_instances,
+    #              'num_instances_available': num_instances_available, 'num_authors': num_authors},
+    #     # the context is a dictionary
+    # )
+    num_visits = request.session.get('num_visits', 0)
+    request.session['num_visits'] = num_visits + 1
+
+    # Render the HTML template index.html with the data in the context variable.
     return render(
         request,
         'index.html',
-        context={'num_LearningwithKernels': num_LearningwithKernels, 'num_genres': num_genres, 'num_books': num_books,
-                 'num_instances': num_instances,
-                 'num_instances_available': num_instances_available, 'num_authors': num_authors},
-        # the context is a dictionary
+        context={'num_books': num_books, 'num_instances': num_instances,
+                 'num_instances_available': num_instances_available, 'num_authors': num_authors,
+                 'num_visits': num_visits},  # num_visits appended
     )
 
 
